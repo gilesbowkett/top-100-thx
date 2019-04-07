@@ -50,7 +50,7 @@ ListedContributor = Struct.new(:name, :link, :rank) do
 end
 
 # the summary comes from the contributors web site; the message comes from git
-Commit = Struct.new(:sha1, :date, :summary, :message, :show) do
+Commit = Struct.new(:sha1, :summary, :date, :message, :show) do
   def initialize(*args)
     super(*args)
 
@@ -59,12 +59,16 @@ Commit = Struct.new(:sha1, :date, :summary, :message, :show) do
     self.message = commit.message
     self.show = git.show(sha1)
   end
+
+  def parsed_correct_commit?
+    self.message[0..50] == self.summary[0..50]
+  end
 end
 
 IndividualContributor = Struct.new(:commits, :start, :finish) do
   def self.parse(raw_data)
     commits = raw_data["git_hashes"].each_with_index.map do |sha1, index|
-      Commit.new(sha1, raw_data["commit_dates"][index], raw_data["commit_messages"][index])
+      Commit.new(sha1, raw_data["commit_messages"][index], raw_data["commit_dates"][index])
     end
 
     dates = raw_data["commit_dates"].map do |date|

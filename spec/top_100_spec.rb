@@ -214,8 +214,22 @@ describe "turning raw data into an individual contributor" do
       expect(contributor.commits.count).to eq(3)
     end
 
-    it "warns if the contributors.rubyonrails.org summary doesn't match the commit"
-    # more likely a bug in my code than the site, but either way, gotta know
+    describe "sanity check" do
+
+      let(:sane) do
+        Commit.new("e81f1ac", "Uncomment test for join model method_missing. Closes #87...")
+      end
+
+      let(:nope) do
+        Commit.new("e81f1ac", "this page referred to an :href_options keyword hash, in ...")
+      end
+
+      # more likely a bug in my code than the site, but either way, gotta know
+      it "can tell if the contributors.rubyonrails.org summary doesn't match the commit" do
+        expect(sane.parsed_correct_commit?).to be true
+        expect(nope.parsed_correct_commit?).to be false
+      end
+    end
 
     # I think in Clojure this would just be interleave
     it "captures the dates, sha hashes, and summaries, in order" do

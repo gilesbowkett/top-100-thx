@@ -164,11 +164,11 @@ describe "turning raw data into an individual contributor" do
     }
   end
   let(:contributor) do
-    IndividalContributor.parse(raw_data)
+    IndividualContributor.parse(raw_data)
   end
 
-  it "creates an IndividalContributor" do
-    expect(contributor).to be_an(IndividalContributor)
+  it "creates an IndividualContributor" do
+    expect(contributor).to be_an(IndividualContributor)
   end
 
   it "gets the start year" do

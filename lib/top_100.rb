@@ -61,7 +61,7 @@ Commit = Struct.new(:sha1, :date, :summary, :message, :show) do
   end
 end
 
-IndividalContributor = Struct.new(:start, :finish, :commits) do
+IndividualContributor = Struct.new(:start, :finish, :commits) do
   def self.parse(raw_data)
     dates = raw_data["commit_dates"].map do |date|
       Date.parse(date)
@@ -76,4 +76,3 @@ IndividalContributor = Struct.new(:start, :finish, :commits) do
     new(start, finish, commits)
   end
 end
-

@@ -1,6 +1,6 @@
 require 'wombat'
 
-Scraper = Struct.new(:number) do
+class Scraper
   def main_page
     scraped = Wombat.crawl do
       base_url "https://contributors.rubyonrails.org"
@@ -14,6 +14,14 @@ Scraper = Struct.new(:number) do
     scraped.inject({}) do |h, (k, v)|
       h[k] = v.first(100)
       h
+    end
+  end
+end
+
+ListedContributor = Struct.new(:name, :link, :rank) do
+  def self.create(raw_data)
+    raw_data["contributor_ranks"].each_with_index.map do |rank, index|
+      new(raw_data["contributor_names"][index], raw_data["contributor_links"][index], rank.gsub('#', '').to_i)
     end
   end
 end

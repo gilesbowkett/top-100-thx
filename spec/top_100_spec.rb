@@ -10,7 +10,7 @@ end
 describe "scraping the main list web page" do
   before(:all) do
     # cache it. hitting the network once is bad enough!
-    @main_page = Scraper.new(1).main_page
+    @main_page = Scraper.new.main_page
   end
 
   it "gets only the first 100 ranks" do
@@ -51,12 +51,57 @@ describe "scraping the main list web page" do
     # it turned out to be a weird redundant commit that made the difference, and there are
     # probably a lot of little edge cases like that, but I want to surface them just in case.
   end
+
+  describe "turning raw data into an indexed list of contributors" do
+    let(:scraped_data) do
+      {
+        "contributor_ranks" => [
+          "#1",
+          "#2",
+          "#2",
+          "#3"
+        ],
+        "contributor_names" => [
+          "Jon Snow",
+          "Tyrion Lannister",
+          "Arya Stark",
+          "Bronn of the Blackwater"
+        ],
+        "contributor_links" => [
+          "/contributors/jon-snow/commits",
+          "/contributors/tyrion-lannister/commits",
+          "/contributors/arya-stark/commits",
+          "/contributors/bronn/commits"
+        ]
+      }
+    end
+    let(:contributors) do
+      ListedContributor.create(scraped_data)
+    end
+
+    it "creates a list of contributors" do
+      contributors.each {|contributor| expect(contributor).to be_a(ListedContributor)}
+    end
+
+    it "orders the list by rank" do
+      expect(contributors.map(&:name)).to eq(["Jon Snow", "Tyrion Lannister", "Arya Stark", "Bronn of the Blackwater"])
+    end
+
+    it "assigns the correct links" do
+      expect(contributors[0].link).to eq("/contributors/jon-snow/commits")
+      expect(contributors[2].link).to eq("/contributors/arya-stark/commits")
+    end
+
+    it "turns the ranks into numbers" do
+      expect(contributors[0].rank).to eq(1)
+    end
+  end
 end
 
 describe "scraping the committer's link" do
   before(:all) do
     # cache it. hitting the network once is bad enough!
-    # @main_page = Scraper.new(1).contributor_page
+    # @contributor_page = Scraper.new.contributor_page("/contributors/rafael-mendonca-franca/commits")
   end
 
   it "gets the committer's git hashes"

@@ -1,8 +1,6 @@
 require "./lib/top_100"
 
 describe "args" do
-  it "lets you specify which number you want"
-
   it "lets you specify what number you did last, and then gives you all the contributors who are next in line"
   # i.e., it handles ties
 end
@@ -59,7 +57,7 @@ describe "scraping the main list web page" do
           "#1",
           "#2",
           "#2",
-          "#3"
+          "#4"
         ],
         "contributor_names" => [
           "Jon Snow",
@@ -76,7 +74,7 @@ describe "scraping the main list web page" do
       }
     end
     let(:contributors) do
-      ListedContributor.create(scraped_data)
+      ListedContributor.parse(scraped_data)
     end
 
     it "creates a list of contributors" do
@@ -94,6 +92,16 @@ describe "scraping the main list web page" do
 
     it "turns the ranks into numbers" do
       expect(contributors[0].rank).to eq(1)
+    end
+
+    it "is trivial now to get the contributors for a given rank" do
+      tied_for_2nd_place = contributors.select {|c| c.rank == 2}
+      expect(tied_for_2nd_place.map(&:name)).to eq(["Tyrion Lannister", "Arya Stark"])
+    end
+
+    it "can tell you who is next, given a specific rank" do
+      next_up = contributors.who_comes_next(4)
+      expect(next_up.map(&:name)).to eq(["Tyrion Lannister", "Arya Stark"])
     end
   end
 end

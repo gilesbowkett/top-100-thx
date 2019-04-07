@@ -18,10 +18,20 @@ class Scraper
   end
 end
 
+class ListedContributors < Array
+  def who_comes_next(current_index)
+    subsequent = select {|contributor| contributor.rank < current_index}
+    next_index = subsequent.last.rank
+    select {|contributor| contributor.rank == next_index} # FIXME: more efficient way?
+  end
+end
+
 ListedContributor = Struct.new(:name, :link, :rank) do
-  def self.create(raw_data)
-    raw_data["contributor_ranks"].each_with_index.map do |rank, index|
+  def self.parse(raw_data)
+    parsed = raw_data["contributor_ranks"].each_with_index.map do |rank, index|
       new(raw_data["contributor_names"][index], raw_data["contributor_links"][index], rank.gsub('#', '').to_i)
     end
+
+    ListedContributors.new(parsed)
   end
 end

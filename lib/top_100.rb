@@ -1,4 +1,5 @@
 require 'wombat'
+require 'date'
 
 class Scraper
   def main_page
@@ -23,6 +24,8 @@ class Scraper
       path contributor_url
 
       git_hashes "css=span.sha1", :list
+      commit_dates "css=td.commit-date", :list
+      commit_messages "css=td.commit-message", :list
     end
   end
 end
@@ -44,3 +47,22 @@ ListedContributor = Struct.new(:name, :link, :rank) do
     ListedContributors.new(parsed)
   end
 end
+
+Commit = Struct.new(:date, :sha1, :message)
+
+IndividalContributor = Struct.new(:start, :finish, :commits) do
+  def self.parse(raw_data)
+    dates = raw_data["commit_dates"].map do |date|
+      Date.parse(date)
+    end
+    start = dates.sort.first.year
+    finish = dates.sort.last.year
+
+    commits = raw_data["git_hashes"].each_with_index.map do |sha1, index|
+      Commit.new(raw_data["commit_dates"][index], sha1, raw_data["commit_messages"][index])
+    end
+
+    new(start, finish, commits)
+  end
+end
+

@@ -114,6 +114,20 @@ describe "scraping the committer's link" do
       "6af2cbc"
     ]
   end
+  let(:dates) do
+    [
+      "17 Mar 2009",
+      "15 Oct 2007",
+      "18 Jun 2007"
+    ]
+  end
+  let(:messages) do
+    [
+      "this page referred to an :href_options keyword hash, in ...",
+			"Uncomment test for join model method_missing. Closes #87...",
+      "remove extra debug line.  Closes #8681 [Giles Bowkett]"
+    ]
+  end
 
   before(:all) do
     # cache it. hitting the network once is bad enough!
@@ -124,20 +138,97 @@ describe "scraping the committer's link" do
     expect(@contributor_page["git_hashes"]).to eq(hashes)
   end
 
-  it "gets the committer's commit summaries"
-  # for sanity-checking the git analysis
+  it "gets the committer's commit dates" do
+    expect(@contributor_page["commit_dates"]).to eq(dates)
+  end
 
-  it "gets the start year"
+  it "gets the committer's commit messages" do
+		# for sanity-checking the git analysis
+    expect(@contributor_page["commit_messages"]).to eq(messages)
+  end
+end
 
-  it "gets the finish year"
+describe "turning raw data into an individual contributor" do
+  let(:raw_data) do
+    {
+      "git_hashes" => [
+        "168e395",
+        "e81f1ac",
+        "6af2cbc"
+      ],
+       "commit_dates" => [
+        "17 Mar 2009",
+        "15 Oct 2007",
+        "18 Jun 2007"
+      ],
+      "commit_messages" => [
+        "this page referred to an :href_options keyword hash, in ...",
+        "Uncomment test for join model method_missing. Closes #87...",
+        "remove extra debug line.  Closes #8681 [Giles Bowkett]"
+      ]
+    }
+  end
+  let(:contributor) do
+    IndividalContributor.parse(raw_data)
+  end
 
-  it "gets the commit count"
+  it "creates an IndividalContributor" do
+    expect(contributor).to be_an(IndividalContributor)
+  end
 
-  it "also counts the commits manually"
+	it "gets the start year" do
+    expect(contributor.start).to eq(2007)
+  end
+
+	it "gets the finish year" do
+    expect(contributor.finish).to eq(2009)
+	end
+
+  describe "parsing commits" do
+    # FIXME: DRY!
+		let(:hashes) do
+			[
+				"168e395",
+				"e81f1ac",
+				"6af2cbc"
+			]
+		end
+		let(:dates) do
+			[
+				"17 Mar 2009",
+				"15 Oct 2007",
+				"18 Jun 2007"
+			]
+		end
+		let(:messages) do
+			[
+				"this page referred to an :href_options keyword hash, in ...",
+				"Uncomment test for join model method_missing. Closes #87...",
+				"remove extra debug line.  Closes #8681 [Giles Bowkett]"
+			]
+		end
+
+    it "captures them all" do
+      expect(contributor.commits.count).to eq(3)
+    end
+
+    # I think in Clojure this would just be interleave
+    it "captures the dates, sha hashes, and messages, in order" do
+      expect(contributor.commits.first.sha1).to eq(hashes.first)
+      expect(contributor.commits.first.message).to eq(messages.first)
+      expect(contributor.commits.first.date).to eq(dates.first)
+
+      expect(contributor.commits.last.sha1).to eq(hashes.last)
+      expect(contributor.commits.last.message).to eq(messages.last)
+      expect(contributor.commits.last.date).to eq(dates.last)
+    end
+  end
 end
 
 describe "analyzing git" do
   it "gets all the git commit messages for the hashes it already has"
 
   it "surfaces a hash (map) of words and their frequencies"
+
+  it "surfaces a hash of modified filenames and their frequencies"
 end

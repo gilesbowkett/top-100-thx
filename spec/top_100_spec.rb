@@ -286,8 +286,8 @@ describe "analyzing git" do
     expect(commit.show).to eq(show)
   end
 
+  # these two require a contributor with multiple commits
   it "surfaces a hash (map) of words and their frequencies"
-  # it would probably be easy to do this for the code each contributor affected also
 
   it "surfaces a hash of modified filenames and their frequencies"
 end

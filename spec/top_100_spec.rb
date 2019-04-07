@@ -200,7 +200,7 @@ describe "turning raw data into an individual contributor" do
 				"18 Jun 2007"
 			]
 		end
-		let(:messages) do
+		let(:summaries) do
 			[
 				"this page referred to an :href_options keyword hash, in ...",
 				"Uncomment test for join model method_missing. Closes #87...",
@@ -213,20 +213,32 @@ describe "turning raw data into an individual contributor" do
     end
 
     # I think in Clojure this would just be interleave
-    it "captures the dates, sha hashes, and messages, in order" do
+    it "captures the dates, sha hashes, and summaries, in order" do
       expect(contributor.commits.first.sha1).to eq(hashes.first)
-      expect(contributor.commits.first.message).to eq(messages.first)
+      expect(contributor.commits.first.summary).to eq(summaries.first)
       expect(contributor.commits.first.date).to eq(dates.first)
 
       expect(contributor.commits.last.sha1).to eq(hashes.last)
-      expect(contributor.commits.last.message).to eq(messages.last)
+      expect(contributor.commits.last.summary).to eq(summaries.last)
       expect(contributor.commits.last.date).to eq(dates.last)
     end
   end
 end
 
 describe "analyzing git" do
-  it "gets all the git commit messages for the hashes it already has"
+  let(:commit) do
+    Commit.new("168e395")
+  end
+  let(:full_message) do
+    msg = <<~FULL_MESSAGE
+      this page referred to an :href_options keyword hash, in fact the correct keyword (the one the code responds to) is :html
+    FULL_MESSAGE
+    msg.chomp
+  end
+
+  it "gets the full git commit message" do
+    expect(commit.message).to eq(full_message)
+  end
 
   it "surfaces a hash (map) of words and their frequencies"
   # it would probably be easy to do this for the code each contributor affected also

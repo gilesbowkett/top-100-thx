@@ -1,5 +1,6 @@
 require 'wombat'
 require 'date'
+require 'git'
 
 class Scraper
   def main_page
@@ -48,7 +49,16 @@ ListedContributor = Struct.new(:name, :link, :rank) do
   end
 end
 
-Commit = Struct.new(:date, :sha1, :message)
+# the summary comes from the contributors web site; the message comes from git
+Commit = Struct.new(:sha1, :date, :summary, :message) do
+  def initialize(*args)
+    super(*args)
+
+    git = Git.open("data/rails")
+    commit = git.gcommit('168e395')
+    self.message = commit.message
+  end
+end
 
 IndividalContributor = Struct.new(:start, :finish, :commits) do
   def self.parse(raw_data)
@@ -59,7 +69,7 @@ IndividalContributor = Struct.new(:start, :finish, :commits) do
     finish = dates.sort.last.year
 
     commits = raw_data["git_hashes"].each_with_index.map do |sha1, index|
-      Commit.new(raw_data["commit_dates"][index], sha1, raw_data["commit_messages"][index])
+      Commit.new(sha1, raw_data["commit_dates"][index], raw_data["commit_messages"][index])
     end
 
     new(start, finish, commits)

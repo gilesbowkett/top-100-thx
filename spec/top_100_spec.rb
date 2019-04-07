@@ -1,6 +1,7 @@
 require "./lib/top_100"
 
 describe "scraping the main list web page" do
+
   before(:all) do
     # cache it. hitting the network once is bad enough!
     @main_page = Scraper.new.main_page
@@ -19,6 +20,7 @@ describe "scraping the main list web page" do
   end
 
   describe "per contributor" do
+
     let(:contributor) do
       {
         rank: @main_page["contributor_ranks"][0],
@@ -38,14 +40,10 @@ describe "scraping the main list web page" do
     it "gets the committer's name" do
       expect(contributor[:name]).to eq("Rafael Mendonça França")
     end
-
-    it "gets the official count of commits"
-    # sanity-checking; I saw a contributor with more commits than the contributor before them.
-    # it turned out to be a weird redundant commit that made the difference, and there are
-    # probably a lot of little edge cases like that, but I want to surface them just in case.
   end
 
   describe "turning raw data into an indexed list of contributors" do
+
     let(:scraped_data) do
       {
         "contributor_ranks" => [
@@ -68,6 +66,7 @@ describe "scraping the main list web page" do
         ]
       }
     end
+
     let(:contributors) do
       ListedContributor.parse(scraped_data)
     end
@@ -102,6 +101,7 @@ describe "scraping the main list web page" do
 end
 
 describe "scraping the committer's link" do
+
   let(:hashes) do
     [
       "168e395",
@@ -109,6 +109,7 @@ describe "scraping the committer's link" do
       "6af2cbc"
     ]
   end
+
   let(:dates) do
     [
       "17 Mar 2009",
@@ -116,6 +117,7 @@ describe "scraping the committer's link" do
       "18 Jun 2007"
     ]
   end
+
   let(:messages) do
     [
       "this page referred to an :href_options keyword hash, in ...",
@@ -144,6 +146,7 @@ describe "scraping the committer's link" do
 end
 
 describe "turning raw data into an individual contributor" do
+
   let(:raw_data) do
     {
       "git_hashes" => [
@@ -163,6 +166,7 @@ describe "turning raw data into an individual contributor" do
       ]
     }
   end
+
   let(:contributor) do
     IndividualContributor.parse(raw_data)
   end
@@ -180,6 +184,7 @@ describe "turning raw data into an individual contributor" do
   end
 
   describe "parsing commits" do
+
     # FIXME: DRY!
     let(:hashes) do
       [
@@ -188,6 +193,7 @@ describe "turning raw data into an individual contributor" do
         "6af2cbc"
       ]
     end
+
     let(:dates) do
       [
         "17 Mar 2009",
@@ -195,6 +201,7 @@ describe "turning raw data into an individual contributor" do
         "18 Jun 2007"
       ]
     end
+
     let(:summaries) do
       [
         "this page referred to an :href_options keyword hash, in ...",
@@ -206,6 +213,9 @@ describe "turning raw data into an individual contributor" do
     it "captures them all" do
       expect(contributor.commits.count).to eq(3)
     end
+
+    it "warns if the contributors.rubyonrails.org summary doesn't match the commit"
+    # more likely a bug in my code than the site, but either way, gotta know
 
     # I think in Clojure this would just be interleave
     it "captures the dates, sha hashes, and summaries, in order" do
@@ -221,15 +231,18 @@ describe "turning raw data into an individual contributor" do
 end
 
 describe "analyzing git" do
+
   let(:commit) do
     Commit.new("168e395")
   end
+
   let(:full_message) do
     msg = <<~FULL_MESSAGE
       this page referred to an :href_options keyword hash, in fact the correct keyword (the one the code responds to) is :html
     FULL_MESSAGE
     msg.chomp
   end
+
   let(:show) do
     msg = <<~SHOW
       commit 168e3958df38b7f6738d60f2510a2e6d1ebcc9fb
@@ -280,9 +293,104 @@ describe "analyzing git" do
   it "shows you the full commit with diff and message" do
     expect(commit.show).to eq(show)
   end
+end
 
-  # these two require a contributor with multiple commits
-  it "surfaces a hash (map) of words and their frequencies"
+describe "analyzing a contributor's commits" do
 
-  it "surfaces a hash of modified filenames and their frequencies"
+  # FIXME: DRY, also, these should likely be distinct files
+  let(:hashes) do
+    [
+      "168e395",
+      "e81f1ac"
+    ]
+  end
+
+  let(:commits) do
+    hashes.map {|sha| Commit.new(sha)}
+  end
+
+  let(:contributor) do
+    IndividualContributor.new(commits)
+  end
+
+  let(:commit_msg_word_freq) do
+    {
+       "0310" => 1,
+       "1ee6" => 1,
+       "5ecf4fe2" => 1,
+       "7897" => 1,
+       "8707" => 1,
+       "87b1" => 1,
+       "Bowkett" => 1,
+       "Closes" => 1,
+       "Giles" => 1,
+       "Josh" => 1,
+       "Peek" => 1,
+       "Uncomment" => 1,
+       "an" => 1,
+       "code" => 1,
+       "commit" => 1,
+       "correct" => 1,
+       "e25e094e27de" => 1,
+       "fact" => 1,
+       "for" => 1,
+       "git" => 1,
+       "hash" => 1,
+       "href_options" => 1,
+       "html" => 1,
+       "http" => 1,
+       "id" => 1,
+       "in" => 1,
+       "is" => 1,
+       "join" => 1,
+       "keyword" => 2,
+       "method_missing" => 1,
+       "model" => 1,
+       "one" => 1,
+       "org" => 1,
+       "page" => 1,
+       "rails" => 1,
+       "referred" => 1,
+       "responds" => 1,
+       "rubyonrails" => 1,
+       "svn" => 2,
+       "test" => 1,
+       "the" => 3,
+       "this" => 1,
+       "to" => 2,
+       "trunk" => 1,
+    }
+  end
+
+  let(:filename_modification_frequency) do
+    {
+      "actionpack/lib/action_view/helpers/text_helper.rb" => 1,
+      "activerecord/test/associations/join_model_test.rb" => 1
+    }
+  end
+
+  let(:diff) do
+    <<~DIFF
+      foo
+      diff --git a/activerecord/test/associations/join_model_test.rb b/activerecord/test/associations/join_model_test.rb
+      bar
+    DIFF
+  end
+
+  let(:filename) do
+    "activerecord/test/associations/join_model_test.rb"
+  end
+
+  it "surfaces a hash (map) of words (from commit messages) and their frequencies" do
+    expect(contributor.commit_msg_word_freq).to eq(commit_msg_word_freq)
+  end
+
+  it "surfaces a hash of modified filenames and their frequencies" do
+    expect(contributor.filename_modification_frequency).to eq(filename_modification_frequency)
+  end
+
+  # always TDD your regexes
+  it "uses a regex to pull out filenames" do
+    expect(contributor.filename_from_diff(diff)).to eq(filename)
+  end
 end

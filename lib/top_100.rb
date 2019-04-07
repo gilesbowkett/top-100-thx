@@ -61,18 +61,43 @@ Commit = Struct.new(:sha1, :date, :summary, :message, :show) do
   end
 end
 
-IndividualContributor = Struct.new(:start, :finish, :commits) do
+IndividualContributor = Struct.new(:commits, :start, :finish) do
   def self.parse(raw_data)
+    commits = raw_data["git_hashes"].each_with_index.map do |sha1, index|
+      Commit.new(sha1, raw_data["commit_dates"][index], raw_data["commit_messages"][index])
+    end
+
     dates = raw_data["commit_dates"].map do |date|
       Date.parse(date)
     end
     start = dates.sort.first.year
     finish = dates.sort.last.year
 
-    commits = raw_data["git_hashes"].each_with_index.map do |sha1, index|
-      Commit.new(sha1, raw_data["commit_dates"][index], raw_data["commit_messages"][index])
+    new(commits, start, finish)
+  end
+
+  def commit_msg_word_freq
+    words = (self.commits.map {|commit| commit.message.split(/\W/)}).flatten.select {|word| word != ""}
+
+    words.inject(Hash.new(0)) do |acc, word|
+      acc[word] += 1
+      acc
+    end
+  end
+
+  def filename_modification_frequency
+    filenames = self.commits.map do |commit|
+      filename_from_diff(commit.show)
     end
 
-    new(start, finish, commits)
+    filenames.inject(Hash.new(0)) do |acc, filename|
+      acc[filename] += 1
+      acc
+    end
+  end
+
+  def filename_from_diff(diff)
+    matched = diff.match(/.+\ndiff --git a\/([^ ]+) b\//m)
+    matched[1]
   end
 end

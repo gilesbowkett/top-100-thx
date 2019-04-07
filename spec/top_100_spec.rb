@@ -2,6 +2,9 @@ require "./lib/top_100"
 
 describe "args" do
   it "lets you specify which number you want"
+
+  it "lets you specify what number you did last, and then gives you all the contributors who are next in line"
+  # i.e., it handles ties
 end
 
 describe "scraping the web" do

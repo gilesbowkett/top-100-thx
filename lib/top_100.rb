@@ -16,6 +16,15 @@ class Scraper
       h
     end
   end
+
+  def contributor_page(contributor_url)
+    scraped = Wombat.crawl do
+      base_url "https://contributors.rubyonrails.org"
+      path contributor_url
+
+      git_hashes "css=span.sha1", :list
+    end
+  end
 end
 
 class ListedContributors < Array

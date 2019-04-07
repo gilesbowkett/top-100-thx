@@ -107,12 +107,22 @@ describe "scraping the main list web page" do
 end
 
 describe "scraping the committer's link" do
-  before(:all) do
-    # cache it. hitting the network once is bad enough!
-    # @contributor_page = Scraper.new.contributor_page("/contributors/rafael-mendonca-franca/commits")
+  let(:hashes) do
+    [
+      "168e395",
+      "e81f1ac",
+      "6af2cbc"
+    ]
   end
 
-  it "gets the committer's git hashes"
+  before(:all) do
+    # cache it. hitting the network once is bad enough!
+    @contributor_page = Scraper.new.contributor_page("/contributors/giles-bowkett/commits")
+  end
+
+  it "gets the committer's git hashes" do
+    expect(@contributor_page["git_hashes"]).to eq(hashes)
+  end
 
   it "gets the committer's commit summaries"
   # for sanity-checking the git analysis
@@ -121,7 +131,9 @@ describe "scraping the committer's link" do
 
   it "gets the finish year"
 
-  it "counts the commits"
+  it "gets the commit count"
+
+  it "also counts the commits manually"
 end
 
 describe "analyzing git" do

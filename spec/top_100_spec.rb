@@ -102,11 +102,11 @@ end
 
 describe "scraping the committer's link" do
 
-  let(:hashes) do
+  let(:github_urls) do
     [
-      "168e395",
-      "e81f1ac",
-      "6af2cbc"
+      "https://github.com/rails/rails/commit/168e3958df38b7f6738d60f2510a2e6d1ebcc9fb",
+      "https://github.com/rails/rails/commit/e81f1acc33a642df68c32d28202dcf589a79d714",
+      "https://github.com/rails/rails/commit/6af2cbca07821e66cc358a4105a54c78f1dde19b"
     ]
   end
 
@@ -131,8 +131,8 @@ describe "scraping the committer's link" do
     @contributor_page = Scraper.new.contributor_page("/contributors/giles-bowkett/commits")
   end
 
-  it "gets the committer's git hashes" do
-    expect(@contributor_page["git_hashes"]).to eq(hashes)
+  it "gets the committer's github_urls" do
+    expect(@contributor_page["github_urls"]).to eq(github_urls)
   end
 
   it "gets the committer's commit dates" do
@@ -149,10 +149,10 @@ describe "turning raw data into an individual contributor" do
 
   let(:raw_data) do
     {
-      "git_hashes" => [
-        "168e395",
-        "e81f1ac",
-        "6af2cbc"
+      "github_urls" => [
+        "https://github.com/rails/rails/commit/168e3958df38b7f6738d60f2510a2e6d1ebcc9fb",
+        "https://github.com/rails/rails/commit/e81f1acc33a642df68c32d28202dcf589a79d714",
+        "https://github.com/rails/rails/commit/6af2cbca07821e66cc358a4105a54c78f1dde19b"
       ],
        "commit_dates" => [
         "17 Mar 2009",
@@ -175,6 +175,9 @@ describe "turning raw data into an individual contributor" do
     expect(contributor).to be_an(IndividualContributor)
   end
 
+  it "gets the git hash (sha1)" do
+  end
+
   it "gets the start year" do
     expect(contributor.start).to eq(2007)
   end
@@ -188,9 +191,9 @@ describe "turning raw data into an individual contributor" do
     # FIXME: DRY!
     let(:hashes) do
       [
-        "168e395",
-        "e81f1ac",
-        "6af2cbc"
+        "168e3958df38b7f6738d60f2510a2e6d1ebcc9fb",
+        "e81f1acc33a642df68c32d28202dcf589a79d714",
+        "6af2cbca07821e66cc358a4105a54c78f1dde19b"
       ]
     end
 
@@ -406,5 +409,6 @@ describe "analyzing a contributor's commits" do
   # always TDD your regexes
   it "uses a regex to pull out filenames" do
     expect(contributor.filename_from_diff(diff)).to eq(filename)
+    # FIXME: what happens if it fails?
   end
 end

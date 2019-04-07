@@ -24,7 +24,7 @@ class Scraper
       base_url "https://contributors.rubyonrails.org"
       path contributor_url
 
-      git_hashes "css=span.sha1", :list
+      github_urls "xpath=//html/body/div[3]/div/div/div/div/div/div/table/tr/td[1]/a/@href", :list
       commit_dates "css=td.commit-date", :list
       commit_messages "css=td.commit-message", :list
     end
@@ -67,7 +67,8 @@ end
 
 IndividualContributor = Struct.new(:commits, :start, :finish) do
   def self.parse(raw_data)
-    commits = raw_data["git_hashes"].each_with_index.map do |sha1, index|
+    commits = raw_data["github_urls"].each_with_index.map do |url, index|
+      sha1 = url.gsub('https://github.com/rails/rails/commit/', '')
       Commit.new(sha1, raw_data["commit_messages"][index], raw_data["commit_dates"][index])
     end
 
@@ -101,7 +102,35 @@ IndividualContributor = Struct.new(:commits, :start, :finish) do
   end
 
   def filename_from_diff(diff)
+    # FIXME: String#match has such an awkward API
     matched = diff.match(/.+\ndiff --git a\/([^ ]+) b\//m)
-    matched[1]
+    matched[1] if matched
   end
 end
+
+# trial run: check Ernie Miller for tag cloud and filename frequency
+if __FILE__ == $0
+  require 'awesome_print'
+  scraper = Scraper.new
+
+  main_page = scraper.main_page
+  contributors = ListedContributor.parse(main_page)
+
+  ernie_from_list = contributors.detect {|contrib| "Ernie Miller" == contrib.name}
+  ernies_page = scraper.contributor_page(ernie_from_list.link)
+
+  ernie_from_page = IndividualContributor.parse(ernies_page)
+  ap "ernie started: #{ernie_from_page.start}"
+  ap "ernie went til: #{ernie_from_page.finish}"
+
+  ap "ernie's most frequently modified files:"
+  freq = ernie_from_page.filename_modification_frequency
+  freq.delete(nil)
+  ap freq.sort_by {|_k, v| v}
+
+  ap "ernie's most frequently used words:"
+  freq = ernie_from_page.commit_msg_word_freq
+  freq.delete(nil)
+  ap freq.sort_by {|_k, v| v}
+end
+

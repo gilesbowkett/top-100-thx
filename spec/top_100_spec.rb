@@ -229,6 +229,7 @@ describe "analyzing git" do
   it "gets all the git commit messages for the hashes it already has"
 
   it "surfaces a hash (map) of words and their frequencies"
+  # it would probably be easy to do this for the code each contributor affected also
 
   it "surfaces a hash of modified filenames and their frequencies"
 end

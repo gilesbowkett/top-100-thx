@@ -1,10 +1,5 @@
 require "./lib/top_100"
 
-describe "args" do
-  it "lets you specify what number you did last, and then gives you all the contributors who are next in line"
-  # i.e., it handles ties
-end
-
 describe "scraping the main list web page" do
   before(:all) do
     # cache it. hitting the network once is bad enough!

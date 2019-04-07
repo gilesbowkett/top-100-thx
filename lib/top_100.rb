@@ -1,8 +1,8 @@
 require 'wombat'
 
 Scraper = Struct.new(:number) do
-  def scrape
-    first_run = Wombat.crawl do
+  def main_page
+    scraped = Wombat.crawl do
       base_url "https://contributors.rubyonrails.org"
       path "/"
 
@@ -11,8 +11,7 @@ Scraper = Struct.new(:number) do
       contributor_links "xpath=//html/body/div[3]/div/div/div/div/div/table/tr/td[2]/a/@href", :list
     end
 
-    # TODO: filter the lists in scraped; only return top 100
-    first_run.inject({}) do |h, (k, v)|
+    scraped.inject({}) do |h, (k, v)|
       h[k] = v.first(100)
       h
     end

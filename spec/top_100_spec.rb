@@ -32,15 +32,15 @@ describe "scraping the main list web page" do
       }
     end
 
-		it "gets the committer's rank" do
+    it "gets the committer's rank" do
       expect(contributor[:rank]).to eq("#1")
     end
 
-		it "gets the committer's link" do
+    it "gets the committer's link" do
       expect(contributor[:link]).to eq("/contributors/rafael-mendonca-franca/commits")
     end
 
-		it "gets the committer's name" do
+    it "gets the committer's name" do
       expect(contributor[:name]).to eq("Rafael Mendonça França")
     end
 
@@ -124,7 +124,7 @@ describe "scraping the committer's link" do
   let(:messages) do
     [
       "this page referred to an :href_options keyword hash, in ...",
-			"Uncomment test for join model method_missing. Closes #87...",
+      "Uncomment test for join model method_missing. Closes #87...",
       "remove extra debug line.  Closes #8681 [Giles Bowkett]"
     ]
   end
@@ -143,7 +143,7 @@ describe "scraping the committer's link" do
   end
 
   it "gets the committer's commit messages" do
-		# for sanity-checking the git analysis
+    # for sanity-checking the git analysis
     expect(@contributor_page["commit_messages"]).to eq(messages)
   end
 end
@@ -176,37 +176,37 @@ describe "turning raw data into an individual contributor" do
     expect(contributor).to be_an(IndividalContributor)
   end
 
-	it "gets the start year" do
+  it "gets the start year" do
     expect(contributor.start).to eq(2007)
   end
 
-	it "gets the finish year" do
+  it "gets the finish year" do
     expect(contributor.finish).to eq(2009)
-	end
+  end
 
   describe "parsing commits" do
     # FIXME: DRY!
-		let(:hashes) do
-			[
-				"168e395",
-				"e81f1ac",
-				"6af2cbc"
-			]
-		end
-		let(:dates) do
-			[
-				"17 Mar 2009",
-				"15 Oct 2007",
-				"18 Jun 2007"
-			]
-		end
-		let(:summaries) do
-			[
-				"this page referred to an :href_options keyword hash, in ...",
-				"Uncomment test for join model method_missing. Closes #87...",
-				"remove extra debug line.  Closes #8681 [Giles Bowkett]"
-			]
-		end
+    let(:hashes) do
+      [
+        "168e395",
+        "e81f1ac",
+        "6af2cbc"
+      ]
+    end
+    let(:dates) do
+      [
+        "17 Mar 2009",
+        "15 Oct 2007",
+        "18 Jun 2007"
+      ]
+    end
+    let(:summaries) do
+      [
+        "this page referred to an :href_options keyword hash, in ...",
+        "Uncomment test for join model method_missing. Closes #87...",
+        "remove extra debug line.  Closes #8681 [Giles Bowkett]"
+      ]
+    end
 
     it "captures them all" do
       expect(contributor.commits.count).to eq(3)
@@ -235,9 +235,55 @@ describe "analyzing git" do
     FULL_MESSAGE
     msg.chomp
   end
+  let(:show) do
+    msg = <<~SHOW
+      commit 168e3958df38b7f6738d60f2510a2e6d1ebcc9fb
+      Author: Giles Bowkett <gilesb@gmail.com>
+      Date:   Tue Mar 17 12:41:15 2009 -0700
+
+          this page referred to an :href_options keyword hash, in fact the correct keyword (the one the code responds to) is :html
+
+      diff --git a/actionpack/lib/action_view/helpers/text_helper.rb b/actionpack/lib/action_view/helpers/text_helper.rb
+      index 48bf4717ad..573b99b96e 100644
+      --- a/actionpack/lib/action_view/helpers/text_helper.rb
+      +++ b/actionpack/lib/action_view/helpers/text_helper.rb
+      @@ -324,7 +324,7 @@ module ActionView
+       
+             # Turns all URLs and e-mail addresses into clickable links. The <tt>:link</tt> option
+             # will limit what should be linked. You can add HTML attributes to the links using
+      -      # <tt>:href_options</tt>. Possible values for <tt>:link</tt> are <tt>:all</tt> (default),
+      +      # <tt>:html</tt>. Possible values for <tt>:link</tt> are <tt>:all</tt> (default),
+             # <tt>:email_addresses</tt>, and <tt>:urls</tt>. If a block is given, each URL and
+             # e-mail address is yielded and the result is used as the link text.
+             #
+      @@ -341,7 +341,7 @@ module ActionView
+             #   # => "Visit http://www.loudthinking.com/ or e-mail <a href=\\\"mailto:david@loudthinking.com\\\">david@loudthinking.com</a>"
+             #
+             #   post_body = "Welcome to my new blog at http://www.myblog.com/.  Please e-mail me at me@email.com."
+      -      #   auto_link(post_body, :href_options => { :target => '_blank' }) do |text|
+      +      #   auto_link(post_body, :html => { :target => '_blank' }) do |text|
+             #     truncate(text, 15)
+             #   end
+             #   # => "Welcome to my new blog at <a href=\\\"http://www.myblog.com/\\\" target=\\\"_blank\\\">http://www.m...</a>.
+      @@ -359,7 +359,7 @@ module ActionView
+             #   auto_link(post_body, :all, :target => "_blank")     # => Once upon\\na time
+             #   # => "Welcome to my new blog at <a href=\\\"http://www.myblog.com/\\\" target=\\\"_blank\\\">http://www.myblog.com</a>.
+             #         Please e-mail me at <a href=\\\"mailto:me@email.com\\\">me@email.com</a>."
+      -      def auto_link(text, *args, &block)#link = :all, href_options = {}, &block)
+      +      def auto_link(text, *args, &block)#link = :all, html = {}, &block)
+               return '' if text.blank?
+       
+               options = args.size == 2 ? {} : args.extract_options! # this is necessary because the old auto_link API has a Hash as its last parameter
+    SHOW
+    msg.chomp
+  end
 
   it "gets the full git commit message" do
     expect(commit.message).to eq(full_message)
+  end
+
+  it "shows you the full commit with diff and message" do
+    expect(commit.show).to eq(show)
   end
 
   it "surfaces a hash (map) of words and their frequencies"

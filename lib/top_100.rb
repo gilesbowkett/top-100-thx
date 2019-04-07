@@ -50,13 +50,14 @@ ListedContributor = Struct.new(:name, :link, :rank) do
 end
 
 # the summary comes from the contributors web site; the message comes from git
-Commit = Struct.new(:sha1, :date, :summary, :message) do
+Commit = Struct.new(:sha1, :date, :summary, :message, :show) do
   def initialize(*args)
     super(*args)
 
     git = Git.open("data/rails")
-    commit = git.gcommit('168e395')
+    commit = git.gcommit(sha1)
     self.message = commit.message
+    self.show = git.show(sha1)
   end
 end
 

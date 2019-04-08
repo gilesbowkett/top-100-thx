@@ -140,29 +140,35 @@ IndividualContributor = Struct.new(:commits, :start, :finish) do
   end
 end
 
-# trial run: check Ernie Miller for tag cloud and filename frequency
+# check user for word and filename frequency
 if __FILE__ == $0
-  require 'awesome_print'
+  argv_name = ARGV[0]
+
   scraper = Scraper.new
 
   main_page = scraper.main_page
   contributors = ListedContributor.parse(main_page)
 
-  ernie_from_list = contributors.detect {|contrib| "Ernie Miller" == contrib.name}
-  ernies_page = scraper.contributor_page(ernie_from_list.link)
+  user_from_list = contributors.detect {|contrib| argv_name == contrib.name}
+  users_page = scraper.contributor_page(user_from_list.link)
 
-  ernie_from_page = IndividualContributor.parse(ernies_page)
-  ap "ernie started: #{ernie_from_page.start}"
-  ap "ernie went til: #{ernie_from_page.finish}"
+  user_from_page = IndividualContributor.parse(users_page)
 
-  ap "ernie's most frequently modified files:"
-  freq = ernie_from_page.filename_modification_frequency
+  puts "user's most frequently used words:"
+  freq = user_from_page.commit_msg_word_freq
   freq.delete(nil)
-  ap freq.sort_by {|_k, v| v}
+  freq.sort_by {|_k, v| v}.each {|k, v| puts "#{k}: #{v}"}
+  puts
 
-  ap "ernie's most frequently used words:"
-  freq = ernie_from_page.commit_msg_word_freq
+  puts "user's most frequently modified files:"
+  freq = user_from_page.filename_modification_frequency
   freq.delete(nil)
-  ap freq.sort_by {|_k, v| v}
+  freq.sort_by {|_k, v| v}.each {|k, v| puts "#{k}: #{v}"}
+  puts
+
+  puts "user started: #{user_from_page.start}"
+  puts "user went til: #{user_from_page.finish}"
+  puts "user name: #{argv_name}"
+  puts
 end
 

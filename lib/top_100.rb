@@ -55,9 +55,14 @@ Commit = Struct.new(:sha1, :summary, :date, :message, :show) do
     super(*args)
 
     git = Git.open("data/rails")
-    commit = git.gcommit(sha1)
-    self.message = commit.message
-    self.show = git.show(sha1)
+    begin
+      commit = git.gcommit(sha1)
+      self.message = commit.message
+      self.show = git.show(sha1)
+    rescue Git::GitExecuteError
+      self.message = ""
+      self.show = ""
+    end
   end
 
   def parsed_correct_commit?

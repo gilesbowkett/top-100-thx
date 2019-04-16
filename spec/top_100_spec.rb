@@ -1,5 +1,7 @@
 require "./lib/top_100"
 
+RSpec::Expectations.configuration.on_potential_false_positives = :nothing
+
 describe "scraping the main list web page" do
 
   before(:all) do
@@ -175,8 +177,7 @@ describe "turning raw data into an individual contributor" do
     expect(contributor).to be_an(IndividualContributor)
   end
 
-  it "gets the git hash (sha1)" do
-  end
+  it "gets the git hash (sha1)"
 
   it "gets the start year" do
     expect(contributor.start).to eq(2007)
@@ -184,6 +185,27 @@ describe "turning raw data into an individual contributor" do
 
   it "gets the finish year" do
     expect(contributor.finish).to eq(2009)
+  end
+
+  describe "handling bad commits" do
+
+    let(:raw_data) do
+      {
+        "github_urls" => [
+          "https://github.com/rails/rails/commit/1234asdf1234asdf1234asdf1234asdf1234asdf",
+        ],
+         "commit_dates" => [
+          "17 Mar 2009",
+        ],
+        "commit_messages" => [
+          "this page referred to an :href_options keyword hash, in ...",
+        ]
+      }
+    end
+
+    it "doesn't blow up" do
+      expect { contributor }.to_not raise_error(Git::GitExecuteError)
+    end
   end
 
   describe "parsing commits" do

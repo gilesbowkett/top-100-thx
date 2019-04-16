@@ -206,6 +206,14 @@ describe "turning raw data into an individual contributor" do
     it "doesn't blow up" do
       expect { contributor }.to_not raise_error(Git::GitExecuteError)
     end
+
+    it "makes the commit messsage blank" do
+      expect(contributor.commits.first.message).to eq("")
+    end
+
+    it "makes the commit 'show' blank" do
+      expect(contributor.commits.first.show).to eq("")
+    end
   end
 
   describe "parsing commits" do

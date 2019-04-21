@@ -140,8 +140,11 @@ IndividualContributor = Struct.new(:commits, :start, :finish) do
 
   def filename_from_diff(diff)
     # FIXME: String#match has such an awkward API
-    matched = diff.match(/.+\ndiff --git a\/([^ ]+) b\//m)
-    matched[1] if matched
+    begin
+      matched = diff.match(/.+\ndiff --git a\/([^ ]+) b\//m)
+      matched[1] if matched
+    rescue
+    end
   end
 end
 

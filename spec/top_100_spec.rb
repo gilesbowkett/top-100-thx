@@ -428,9 +428,18 @@ describe "analyzing a contributor's commits" do
     expect(contributor.filename_modification_frequency).to eq(filename_modification_frequency)
   end
 
-  # always TDD your regexes
-  it "uses a regex to pull out filenames" do
-    expect(contributor.filename_from_diff(diff)).to eq(filename)
-    # FIXME: what happens if it fails?
+  describe "#filename_from_diff" do
+    # always TDD your regexes
+    it "uses a regex to pull out filenames" do
+      expect(contributor.filename_from_diff(diff)).to eq(filename)
+    end
+
+    # this is just a convenience for writing blog posts, so it takes a
+    # very "fuck it" philosophy around error handling
+    it "bails on UTF-8 errors" do
+      diff = "asdf"
+      allow(diff).to receive(:match).and_throw ArgumentError.new
+      expect(contributor.filename_from_diff(diff)).to eq(nil)
+    end
   end
 end

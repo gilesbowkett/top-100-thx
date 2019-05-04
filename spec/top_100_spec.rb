@@ -428,18 +428,41 @@ describe "analyzing a contributor's commits" do
     expect(contributor.filename_modification_frequency).to eq(filename_modification_frequency)
   end
 
-  describe "#filename_from_diff" do
+  describe "#filenames_from_diff" do
+
+    let(:files_in_the_big_show) do
+      [
+        "lib/arel/algebra/predicates.rb",
+        "lib/arel/engines/memory/predicates.rb",
+        "lib/arel/engines/sql/core_extensions/nil_class.rb",
+        "lib/arel/engines/sql/core_extensions/object.rb",
+        "lib/arel/engines/sql/predicates.rb",
+        "lib/arel/engines/sql/primitives.rb",
+        "spec/engines/sql/unit/predicates/not_spec.rb"
+      ]
+    end
+
+    let(:big_show) do
+      <<~SHOW
+"commit 5afed6d45def1e72df24679a746cbe96b52c1709\nAuthor: Ernie Miller <ernie@metautonomo.us>\nDate:   Sat Apr 24 08:02:47 2010 -0400\n\n    Inequality shouldn't descend from equality, due to Rails type checks, and resolve conflicts from rebase\n\ndiff --git a/lib/arel/algebra/predicates.rb b/lib/arel/algebra/predicates.rb\nindex 5e17cdd101..d789c1d8a2 100644\n--- a/lib/arel/algebra/predicates.rb\n+++ b/lib/arel/algebra/predicates.rb\n@@ -145,7 +145,13 @@ module Arel\n       end\n     end\n \n-    class Inequality  < Equality\n+    class Inequality  < Binary\n+      def ==(other)\n+        Equality === other and\n+          ((operand1 == other.operand1 and operand2 == other.operand2) or\n+           (operand1 == other.operand2 and operand2 == other.operand1))\n+      end\n+      \n       def complement\n         Equality.new(operand1, operand2)\n       end\ndiff --git a/lib/arel/engines/memory/predicates.rb b/lib/arel/engines/memory/predicates.rb\nindex 0e88810e7d..8b3e5843cc 100644\n--- a/lib/arel/engines/memory/predicates.rb\n+++ b/lib/arel/engines/memory/predicates.rb\n@@ -52,7 +52,7 @@ module Arel\n       def operator; :== end\n     end\n \n-    class Inequality < Equality\n+    class Inequality < Binary\n       def eval(row)\n         operand1.eval(row) != operand2.eval(row)\n       end\ndiff --git a/lib/arel/engines/sql/core_extensions/nil_class.rb b/lib/arel/engines/sql/core_extensions/nil_class.rb\nindex d4bb0e4c33..ab990d6211 100644\n--- a/lib/arel/engines/sql/core_extensions/nil_class.rb\n+++ b/lib/arel/engines/sql/core_extensions/nil_class.rb\n@@ -9,10 +9,6 @@ module Arel\n         'IS NOT'\n       end\n \n-      def not_predicate_sql\n-        'IS NOT'\n-      end\n-\n       NilClass.send(:include, self)\n     end\n   end\ndiff --git a/lib/arel/engines/sql/core_extensions/object.rb b/lib/arel/engines/sql/core_extensions/object.rb\nindex 5415c84706..01c3c5479d 100644\n--- a/lib/arel/engines/sql/core_extensions/object.rb\n+++ b/lib/arel/engines/sql/core_extensions/object.rb\n@@ -13,10 +13,6 @@ module Arel\n         '!='\n       end\n \n-      def not_predicate_sql\n-        '!='\n-      end\n-\n       Object.send(:include, self)\n     end\n   end\ndiff --git a/lib/arel/engines/sql/predicates.rb b/lib/arel/engines/sql/predicates.rb\nindex df8700a500..59b0ab0929 100644\n--- a/lib/arel/engines/sql/predicates.rb\n+++ b/lib/arel/engines/sql/predicates.rb\n@@ -52,7 +52,7 @@ module Arel\n       end\n     end\n \n-    class Inequality < Equality\n+    class Inequality < Binary\n       def predicate_sql\n         operand2.inequality_predicate_sql\n       end\ndiff --git a/lib/arel/engines/sql/primitives.rb b/lib/arel/engines/sql/primitives.rb\nindex 41769fa510..15a27b2256 100644\n--- a/lib/arel/engines/sql/primitives.rb\n+++ b/lib/arel/engines/sql/primitives.rb\n@@ -42,10 +42,6 @@ module Arel\n       value.inequality_predicate_sql\n     end\n \n-    def not_predicate_sql\n-      value.not_predicate_sql\n-    end\n-\n     def to_sql(formatter = Sql::WhereCondition.new(relation))\n       formatter.value value\n     end\ndiff --git a/spec/engines/sql/unit/predicates/not_spec.rb b/spec/engines/sql/unit/predicates/noteq_spec.rb\nsimilarity index 91%\nrename from spec/engines/sql/unit/predicates/not_spec.rb\nrename to spec/engines/sql/unit/predicates/noteq_spec.rb\nindex b124d4c80b..ed24627323 100644\n--- a/spec/engines/sql/unit/predicates/not_spec.rb\n+++ b/spec/engines/sql/unit/predicates/noteq_spec.rb\n@@ -13,7 +13,7 @@ module Arel\n       describe '#to_sql' do\n         describe 'when relating to a non-nil value' do\n           it \"manufactures a not predicate\" do\n-            sql = Not.new(@attribute1, @attribute2).to_sql\n+            sql = Inequality.new(@attribute1, @attribute2).to_sql\n \n             adapter_is :mysql do\n               sql.should be_like(%Q{`users`.`id` != `photos`.`user_id`})\n@@ -35,7 +35,7 @@ module Arel\n           end\n \n           it \"manufactures an is null predicate\" do\n-            sql = Not.new(@attribute1, @nil).to_sql\n+            sql = Inequality.new(@attribute1, @nil).to_sql\n \n             adapter_is :mysql do\n               sql.should be_like(%Q{`users`.`id` IS NOT NULL})\n@@ -54,7 +54,7 @@ module Arel\n         describe \"when relating to a nil Value\" do\n           it \"manufactures an IS NULL predicate\" do\n             value = nil.bind(@relation1)\n-            sql = Not.new(@attribute1, value).to_sql\n+            sql = Inequality.new(@attribute1, value).to_sql\n \n             adapter_is :mysql do\n               sql.should be_like(%Q{`users`.`id` IS NOT NULL})"
+      SHOW
+    end
+
     # always TDD your regexes
     it "uses a regex to pull out filenames" do
-      expect(contributor.filename_from_diff(diff)).to eq(filename)
+      expect(contributor.filenames_from_diff(diff)).to eq([filename])
+    end
+
+    it "extracts every filename in the commit" do
+      expect(contributor.filenames_from_diff(big_show)).to eq(files_in_the_big_show)
     end
 
     # this is just a convenience for writing blog posts, so it takes a
     # very "fuck it" philosophy around error handling
     it "bails on UTF-8 errors" do
       diff = "asdf"
-      allow(diff).to receive(:match).and_throw ArgumentError.new
-      expect(contributor.filename_from_diff(diff)).to eq(nil)
+      allow(diff).to receive(:scan).and_throw ArgumentError.new
+      expect(contributor.filenames_from_diff(diff)).to eq([])
     end
   end
 end

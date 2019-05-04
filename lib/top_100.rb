@@ -129,21 +129,20 @@ IndividualContributor = Struct.new(:commits, :start, :finish) do
 
   def filename_modification_frequency
     filenames = self.commits.map do |commit|
-      filename_from_diff(commit.show)
+      filenames_from_diff(commit.show)
     end
 
-    filenames.inject(Hash.new(0)) do |acc, filename|
+    filenames.flatten.inject(Hash.new(0)) do |acc, filename|
       acc[filename] += 1
       acc
     end
   end
 
-  def filename_from_diff(diff)
-    # FIXME: String#match has such an awkward API
+  def filenames_from_diff(diff)
     begin
-      matched = diff.match(/.+\ndiff --git a\/([^ ]+) b\//m)
-      matched[1] if matched
-    rescue
+      diff.scan(/diff --git a\/([^ ]+) b\//m).flatten
+    rescue ArgumentError
+      []
     end
   end
 end

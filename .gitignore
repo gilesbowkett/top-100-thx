@@ -1,3 +1,4 @@
 .ruby-gemset
+.rbenv-gemsets
 .ruby-version
 data

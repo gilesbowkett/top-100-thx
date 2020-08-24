@@ -5,7 +5,6 @@ RSpec::Expectations.configuration.on_potential_false_positives = :nothing
 describe "scraping the main list web page" do
 
   before(:all) do
-    # cache it. hitting the network once is bad enough!
     @main_page = Scraper.new.main_page
   end
 
@@ -78,7 +77,8 @@ describe "scraping the main list web page" do
     end
 
     it "orders the list by rank" do
-      expect(contributors.map(&:name)).to eq(["Jon Snow", "Tyrion Lannister", "Arya Stark", "Bronn of the Blackwater"])
+      ranked = ["Jon Snow", "Tyrion Lannister", "Arya Stark", "Bronn of the Blackwater"]
+      expect(contributors.map(&:name)).to eq(ranked)
     end
 
     it "assigns the correct links" do
@@ -129,7 +129,6 @@ describe "scraping the committer's link" do
   end
 
   before(:all) do
-    # cache it. hitting the network once is bad enough!
     @contributor_page = Scraper.new.contributor_page("/contributors/giles-bowkett/commits")
   end
 
@@ -457,8 +456,8 @@ describe "analyzing a contributor's commits" do
       expect(contributor.filenames_from_diff(big_show)).to eq(files_in_the_big_show)
     end
 
-    # this is just a convenience for writing blog posts, so it takes a
-    # very "fuck it" philosophy around error handling
+    # this is just a convenience for writing blog posts, so just bail
+    # if there's an error
     it "bails on UTF-8 errors" do
       diff = "asdf"
       allow(diff).to receive(:scan).and_throw ArgumentError.new

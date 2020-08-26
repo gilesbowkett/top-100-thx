@@ -56,11 +56,15 @@ Commit = Struct.new(:sha1, :summary, :date, :message, :show) do
 
     repo = Rugged::Repository.new('data/rails')
 
-    commit = repo.lookup(sha1)
-    self.message = commit.message
+    begin
+      commit = repo.lookup(sha1)
+      self.message = commit.message
 
-    diff = commit.parents[0].diff(commit)
-    self.show = diff
+      diff = commit.parents[0].diff(commit)
+      self.show = diff
+    rescue Rugged::OdbError
+      self.message = self.show = ""
+    end
   end
 
   def parsed_correct_commit?
@@ -137,10 +141,11 @@ IndividualContributor = Struct.new(:commits, :start, :finish) do
   end
 
   def filenames_from_diff(diff)
-    begin
-      diff.patch.scan(/diff --git a\/([^ ]+) b\//m).flatten
-    rescue ArgumentError
+    case diff
+    when ""
       []
+    when Rugged::Diff
+      diff.patch.scan(/diff --git a\/([^ ]+) b\//m).flatten
     end
   end
 end

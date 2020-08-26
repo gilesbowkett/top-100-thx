@@ -50,11 +50,9 @@ ListedContributor = Struct.new(:name, :link, :rank) do
 end
 
 # the summary comes from the contributors web site; the message comes from git
-Commit = Struct.new(:sha1, :summary, :date, :message, :show) do
+Commit = Struct.new(:sha1, :summary, :date, :repo, :message, :show) do
   def initialize(*args)
     super(*args)
-
-    repo = Rugged::Repository.new('data/rails')
 
     begin
       commit = repo.lookup(sha1)
@@ -105,9 +103,14 @@ IndividualContributor = Struct.new(:commits, :start, :finish) do
   ]
 
   def self.parse(raw_data)
+    repo = Rugged::Repository.new('data/rails')
     commits = raw_data["github_urls"].each_with_index.map do |url, index|
       sha1 = url.gsub('https://github.com/rails/rails/commit/', '')
-      Commit.new(sha1, raw_data["commit_messages"][index], raw_data["commit_dates"][index])
+
+      message = raw_data["commit_messages"][index]
+      dates = raw_data["commit_dates"][index]
+
+      Commit.new(sha1, message, dates, repo)
     end
 
     dates = raw_data["commit_dates"].map do |date|

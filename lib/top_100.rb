@@ -1,6 +1,6 @@
 require 'wombat'
 require 'date'
-require 'git'
+require 'rugged'
 
 class Scraper
   def main_page
@@ -54,15 +54,13 @@ Commit = Struct.new(:sha1, :summary, :date, :message, :show) do
   def initialize(*args)
     super(*args)
 
-    git = Git.open("data/rails")
-    begin
-      commit = git.gcommit(sha1)
-      self.message = commit.message
-      self.show = git.show(sha1)
-    rescue Git::GitExecuteError
-      self.message = ""
-      self.show = ""
-    end
+    repo = Rugged::Repository.new('data/rails')
+
+    commit = repo.lookup(sha1)
+    self.message = commit.message
+
+    diff = commit.parents[0].diff(commit)
+    self.show = diff
   end
 
   def parsed_correct_commit?
@@ -140,7 +138,7 @@ IndividualContributor = Struct.new(:commits, :start, :finish) do
 
   def filenames_from_diff(diff)
     begin
-      diff.scan(/diff --git a\/([^ ]+) b\//m).flatten
+      diff.patch.scan(/diff --git a\/([^ ]+) b\//m).flatten
     rescue ArgumentError
       []
     end
